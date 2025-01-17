@@ -1,0 +1,13 @@
+torch
+torchvision
+torchaudio
+diffusers
+transformers
+datasets
+click
+ipython
+ipykernel
+accelerate
+protobuf
+notebook
+sentencepiece
