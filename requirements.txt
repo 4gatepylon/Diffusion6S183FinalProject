@@ -11,3 +11,7 @@ accelerate
 protobuf
 notebook
 sentencepiece
+smalldiffusion
+tqdm
+xformers
+pillow
