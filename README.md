@@ -48,5 +48,9 @@ NEW IDEA: just start by reproducing ARTIST to get some baseline results. We cann
 
 TODOs:
 1. Derisk the idea that StableDiffusion 3 can generate ANY character OK (i.e. generate on image per character): it seems like this does not even work. I guess the question then becomes, can Text-Diffuser or artist do this all-right? If not, then we need to drop the agency and actually get a model that can do basic things I guess.
-2. Think, but probably reproduce/run Text-Diffusion; OK next step is to be able to load and RUN text-diffuser and ALSO to see if it is indeed able to generate characters/text or not.
+2. Think, but probably reproduce/run Text-Diffusion; OK next step is to be able to load and RUN text-diffuser and ALSO to see if it is indeed able to generate characters/text or not. Seems like Text-Diffusion is sort of biased to put text into the image, but it doesn't always do it. It also seems not fully able to just generate the desired text. It's also immediately apparent that this model does not work out of the box. It seems like hte language modedl gets closer to the language than the image model. It seems like the language model cannot do random strings though.
 3. Think, but probably reproduce/run ARTIST
+
+I think my paper might actually be about the beavior of these models out of distribution because none of these models seems capable of generating the desired text/images in the way that I want.
+
+Generally TextDiffuser seems really bad at generating this shit. It's really hard to control it to behave exactly how you want. Could this be a data problem? The models used by OpenAI and anthropic honestly seem to make it closer to the desired text than TextDiffuser.
