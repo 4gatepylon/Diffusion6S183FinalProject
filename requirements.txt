@@ -16,3 +16,4 @@ tqdm
 xformers
 pillow
 nltk
+pydantic
