@@ -1,0 +1,6 @@
+# where we download everything, just use this script to download
+# huggingface-cli download JingyeChen22/textdiffuser2-lora-ft --local-dir . --local-dir-use-symlinks False
+# huggingface-cli download JingyeChen22/textdiffuser2-full-ft-inpainting --local-dir . --local-dir-use-symlinks False
+# huggingface-cli download JingyeChen22/textdiffuser2_layout_planner --local-dir . --local-dir-use-symlinks False
+# and analogous for full ft
+JingyeChen22/
