@@ -28,9 +28,11 @@ text_encoder = TextConditioner().cuda().eval()
 tokenizer = CLIPTokenizer.from_pretrained('openai/clip-vit-large-patch14')
 
 
-def process_caption(font_path, caption, keywords):
+def process_caption(font_path, caption, keywords, remove_punctuation=True):
     # remove punctuations. please remove this statement if you want to paint punctuations
-    caption = re.sub(u"([^\u0041-\u005a\u0061-\u007a\u0030-\u0039])", " ", caption) 
+    # NOTE: if you add punctuations or symbols and you "remove punctuations" then YOUR CODE WILL CRASH some of the time
+    if remove_punctuation:
+        caption = re.sub(u"([^\u0041-\u005a\u0061-\u007a\u0030-\u0039])", " ", caption) 
     
     # tokenize it into ids and get length
     caption_words = tokenizer([caption], truncation=True, max_length=77, return_length=True, return_overflowing_tokens=False, padding="max_length", return_tensors="pt")
@@ -119,6 +121,7 @@ def process_caption(font_path, caption, keywords):
             boxes.append(list(box))
             info_array[index][1:] = box
     
+    # ????
     boxes_length = len(boxes)
     if boxes_length > 8:
         boxes = boxes[:8]
@@ -140,6 +143,7 @@ def get_layout_from_prompt(args):
 
     # process all relevant info
     caption, length_list, width_list, target, words, state_list, word_match_list, boxes, boxes_length = process_caption(font_path, args.prompt, keywords)
+    assert len(keywords) == boxes_length, f'{len(keywords)} keywords != {boxes_length} boxes'
     target = target.cuda().unsqueeze(0) # (77, 5)
     width_list = width_list.cuda().unsqueeze(0) # (77, )
     length_list = length_list.cuda().unsqueeze(0) # (77, )
@@ -167,16 +171,17 @@ def get_layout_from_prompt(args):
             right_shifted_boxes[:,box_index+1,:] = output[:,box_index,:]
             xmin, ymin, xmax, ymax = output[0, box_index, :].tolist()
             return_boxes.append([xmin, ymin, xmax, ymax])
-            
+    assert len(return_boxes) == len(keywords), f'{len(return_boxes)} boxes != {len(keywords)} keywords'
             
     # print the location of keywords
-    print(f'index\tkeyword\tx_min\ty_min\tx_max\ty_max')
+    print(f'index\tkeyword\tx_min\ty_min\tx_max\ty_max\t (out of {len(keywords)} keywords, {len(return_boxes)} boxes)')
     for index, keyword in enumerate(keywords):
+        print(f'{index}\t{keyword}\t', end='') # first half of the line
         x_min = int(return_boxes[index][0] * 512)
         y_min = int(return_boxes[index][1] * 512)
         x_max = int(return_boxes[index][2] * 512)
         y_max = int(return_boxes[index][3] * 512)
-        print(f'{index}\t{keyword}\t{x_min}\t{y_min}\t{x_max}\t{y_max}')
+        print(f'{x_min}\t{y_min}\t{x_max}\t{y_max}') # second half of the line
     
     
     # paint the layout
@@ -204,8 +209,10 @@ def get_layout_from_prompt(args):
             
             # paint character-level segmentation masks
             # https://github.com/python-pillow/Pillow/issues/3921
-            bottom_1 = font.getsize(text[i])[1]
-            right, bottom_2 = font.getsize(text[:i+1])
+            bottom_1 = font.getbbox(text[i])[3] - font.getbbox(text[i])[1]
+            right = font.getlength(text[:i+1])
+            bottom_2 = font.getbbox(text[:i+1])[3] - font.getbbox(text[:i+1])[1]
+            # https://pillow.readthedocs.io/en/stable/reference/Image.html ^
             bottom = bottom_1 if bottom_1 < bottom_2 else bottom_2
             width, height = font.getmask(char).size
             right += xmin

@@ -101,7 +101,8 @@ def make_caption_pil(font_path: str, captions: List[str]):
         text = caption
         lines = textwrap.wrap(text, width=40)
         x, y = 4, 4
-        line_height = font.getsize('A')[1] + 4 
+        # line_height = font.getsize('A')[1] + 4 # <----- seems to be derpecated too...
+        line_height = font.getbbox('A')[3] - font.getbbox('A')[1] + 4
 
         start = 0
         for line in lines:
@@ -213,7 +214,8 @@ def get_width(font_path, text):
         text (str): user prompt.
     """
     font = ImageFont.truetype(font_path, 24)
-    width, _ = font.getsize(text)
+    # width, _ = font.getsize(text) <----- seems to be deprecated acc. claude
+    width = font.getlength(text)
     return width
 
 
@@ -316,7 +318,8 @@ def adjust_font_size(args, width, height, draw, text):
     size_start = height
     while True:
         font = ImageFont.truetype(args.font_path, size_start)
-        text_width, _ = draw.textsize(text, font=font)
+        # text_width, _ = draw.textsize(text, font=font) # <----- seems to be deprecated acc. claude
+        text_width = font.getlength(text)
         if text_width >= width:
             size_start = size_start - 1
         else:

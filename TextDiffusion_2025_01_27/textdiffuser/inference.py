@@ -291,7 +291,7 @@ def get_full_repo_name(model_id: str, organization: Optional[str] = None, token:
         return f"{organization}/{model_id}"
 
 
-# @torchsnooper.snoop()
+# @torchsnooper.snoop() # <---- useful for debugging
 def main():
     args = parse_args()
     # If passed along, set the training seed now.
@@ -333,6 +333,7 @@ def main():
     # Handle the repository creation
     if accelerator.is_main_process:
         if args.push_to_hub:
+            # TODO(Adriano) `repo` seems to never be used again so idt this actually works
             if args.hub_model_id is None:
                 repo_name = get_full_repo_name(Path(args.output_dir).name, token=args.hub_token)
             else:
@@ -406,7 +407,7 @@ def main():
         accelerator.register_load_state_pre_hook(load_model_hook)
 
 
-    # setup schedulers                    
+    # setup schedulers; scheduler seems to be defined in the huggingface diffusion model/etc... framework        
     scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler") 
     scheduler.set_timesteps(args.sample_steps) 
     sample_num = args.vis_num

@@ -52,10 +52,11 @@ Meanwhile, please install torch and torchvision that matches the version of syst
 
 Install Hugging Face Diffuser and replace some files:
 ```
+export ROOT=$(pwd)
 git clone https://github.com/JingyeChen/diffusers
-cp ./assets/files/scheduling_ddpm.py ./diffusers/src/diffusers/schedulers/scheduling_ddpm.py
-cp ./assets/files/unet_2d_condition.py ./diffusers/src/diffusers/models/unet_2d_condition.py
-cp ./assets/files/modeling_utils.py ./diffusers/src/diffusers/models/modeling_utils.py
+cp $ROOT/assets/files/scheduling_ddpm.py ./diffusers/src/diffusers/schedulers/scheduling_ddpm.py
+cp $ROOT/assets/files/unet_2d_condition.py ./diffusers/src/diffusers/models/unet_2d_condition.py
+cp $ROOT/assets/files/modeling_utils.py ./diffusers/src/diffusers/models/modeling_utils.py
 cd diffusers && pip install -e .
 ```
 
@@ -158,6 +159,8 @@ TextDiffuser can be applied on: text-to-image, text-to-image-with-template, and 
 
 ### Text-to-Image
 This task is designed to generate images based on given prompts. Users are required to enclose the keywords to be drawn with single quotation marks.
+
+NOTE: punctuation does NOT seem to be properly supported and is not yet fixed.
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python inference.py \

@@ -54,3 +54,7 @@ TODOs:
 I think my paper might actually be about the beavior of these models out of distribution because none of these models seems capable of generating the desired text/images in the way that I want.
 
 Generally TextDiffuser seems really bad at generating this shit. It's really hard to control it to behave exactly how you want. Could this be a data problem? The models used by OpenAI and anthropic honestly seem to make it closer to the desired text than TextDiffuser.
+
+random ideas: what about 3D perturbations?
+
+random ideas: more guidance will probably make it better; if you never tell it in the dataset what the font is, for example, then it will never be able to learn to create that specific font when you try to describe it
