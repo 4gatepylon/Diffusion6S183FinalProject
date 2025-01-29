@@ -15,6 +15,7 @@ from PIL import Image
 from PIL import Image, ImageDraw, ImageFont
 import random
 import copy
+from termcolor import colored
 
 import string
 alphabet = string.digits + string.ascii_lowercase + string.ascii_uppercase + string.punctuation + ' '  # len(aphabet) = 95
@@ -49,6 +50,7 @@ m1_tokenizer = AutoTokenizer.from_pretrained(m1_model_path, use_fast=False)
 m1_model = AutoModelForCausalLM.from_pretrained(
     m1_model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True
 ).cuda()
+print(f'{colored("[√]", "green")} Loaded M1 Model.')
 
 #### import diffusion models
 text_encoder = CLIPTextModel.from_pretrained(
@@ -57,6 +59,7 @@ text_encoder = CLIPTextModel.from_pretrained(
 tokenizer = CLIPTokenizer.from_pretrained(
     'runwayml/stable-diffusion-v1-5', subfolder="tokenizer"
 )
+print(f'{colored("[√]", "green")} Loaded Tokenizer + CLIP model.')
 
 #### additional tokens are introduced, including coordinate tokens and character tokens
 print('***************')
@@ -72,9 +75,11 @@ print(len(tokenizer))
 print('***************')
 
 vae = AutoencoderKL.from_pretrained('runwayml/stable-diffusion-v1-5', subfolder="vae").half().cuda()
+print(f'{colored("[√]", "green")} Loaded VAE.')
 unet = UNet2DConditionModel.from_pretrained(
     'JingyeChen22/textdiffuser2-full-ft', subfolder="unet"
 ).half().cuda()
+print(f'{colored("[√]", "green")} Loaded UNet.')
 text_encoder.resize_token_embeddings(len(tokenizer))
 
 
@@ -85,12 +90,14 @@ pipe = DiffusionPipeline.from_pretrained(model_id, unet=copy.deepcopy(unet), tok
 pipe.scheduler = LCMScheduler.from_config(pipe.scheduler.config)
 pipe.load_lora_weights(lcm_lora_id)
 pipe.to(device="cuda")
+print(f'{colored("[√]", "green")} Loaded LCM using pokemon diffusers model architecture (lambdalabs pokemon -> lcm lora).')
 
 global_dict = {}
 #### for interactive
 # stack = []
 # state = 0   
-font = ImageFont.truetype("./Arial.ttf", 32)
+font = ImageFont.truetype("./assets/arial.ttf", 32)
+print(f'{colored("[√]", "green")} Loaded font (arial).')
 
 def skip_fun(i, t, guest_id):
     global_dict[guest_id]['state'] = 0
@@ -227,7 +234,7 @@ def get_layout_image(ocrs):
         draw.text((l, t), pred, font=font_layout)
     
     return blank
-
+print(f'{colored("[√]", "green")} Defined various helper functions.')
 
 
 def text_to_image(guest_id, prompt,keywords,positive_prompt,radio,slider_step,slider_guidance,slider_batch,slider_temperature,slider_natural):
@@ -426,6 +433,7 @@ def text_to_image(guest_id, prompt,keywords,positive_prompt,radio,slider_step,sl
             # os.system('nvidia-smi')
             return tuple(image), composed_prompt, layout_image
         
+print(f'{colored("[√]", "green")} Defined Text2Image function.')
 with gr.Blocks() as demo:
 
 
@@ -561,5 +569,5 @@ with gr.Blocks() as demo:
         """
     )
 
-
+print(f'{colored("[√]", "green")} Defined demo using HTML renderer (gradio?).')
 demo.launch()

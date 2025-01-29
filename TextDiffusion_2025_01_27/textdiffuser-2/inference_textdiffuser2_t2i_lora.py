@@ -14,7 +14,7 @@ import shutil
 from pathlib import Path
 import glob
 import time
-
+from termcolor import colored
 import datasets
 import numpy as np
 import torch
@@ -338,9 +338,11 @@ def main():
     text_encoder.resize_token_embeddings(len(tokenizer))
 
     vae = AutoencoderKL.from_pretrained(args.pretrained_model_name_or_path, subfolder="vae")
+    print(f'{colored("[√]", "green")} Loaded VAE.')
     unet = UNet2DConditionModel.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="unet"
     )
+    print(f'{colored("[√]", "green")} Loaded UNet.')
     # freeze parameters of models to save more memory
     unet.requires_grad_(False)
     vae.requires_grad_(False)
@@ -357,6 +359,7 @@ def main():
     # Move unet, vae and text_encoder to device and cast to weight_dtype
     unet.to(accelerator.device, dtype=weight_dtype) 
     vae.to(accelerator.device, dtype=weight_dtype)
+    print(f'{colored("[√]", "green")} Moved unet, vae and text_encoder to device and cast to weight_dtype.')
     # text_encoder.to(accelerator.device, dtype=weight_dtype)
 
     # now we will add new LoRA weights to the attention layers
@@ -390,8 +393,9 @@ def main():
             cross_attention_dim=cross_attention_dim,
             rank=args.rank,
         )
-
+    
     unet.set_attn_processor(lora_attn_procs)
+    print(f'{colored("[√]", "green")} Set correct lora layers.')
 
     if args.enable_xformers_memory_efficient_attention:
         if is_xformers_available():
@@ -579,10 +583,11 @@ def main():
             scheduler.set_timesteps(args.sample_steps) 
             noise = torch.randn((args.vis_num, 4, 64, 64)).to("cuda") 
             input = noise
+            print(f'{colored("[√]", "green")} Loaded scheduler and initialized noise')
 
             encoder_hidden_states_cond = text_encoder(prompts_cond)[0]
             encoder_hidden_states_nocond = text_encoder(prompts_nocond)[0] 
-
+            print(f'{colored("[√]", "green")} Encoded prompts to get conditional and unconditional hidden states')
             texts = prompts_cond
             f = open(f'{args.output_dir}/prompt_{sample_index}_{args.local_rank}.txt', 'w+')
             for text in texts:
@@ -597,6 +602,7 @@ def main():
                     noisy_residual = noise_pred_uncond + args.cfg * (noise_pred_cond - noise_pred_uncond) # b, 4, 64, 64     
                     prev_noisy_sample = scheduler.step(noisy_residual, t, input).prev_sample
                     input = prev_noisy_sample
+            print(f'{colored("[√]", "green")} Denoised image in latent space (?).')
 
             # decode
             input = 1 / vae.config.scaling_factor * input 
@@ -611,6 +617,7 @@ def main():
                 col = index % 4
                 new_image.paste(image, (col*width, row*height))
             new_image.save(f'{args.output_dir}/pred_img_{sample_index}_{args.local_rank}.jpg')
+            print(f'{colored("[√]", "green")} Saved image.')
 
 if __name__ == "__main__":
     main()

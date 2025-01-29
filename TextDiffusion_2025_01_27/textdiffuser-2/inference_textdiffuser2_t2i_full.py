@@ -12,6 +12,7 @@ import logging
 import argparse
 import numpy as np
 import time
+from termcolor import colored
 
 from pathlib import Path
 from tqdm.auto import tqdm
@@ -323,10 +324,12 @@ def main():
             repo_id = create_repo(
                 repo_id=args.hub_model_id or Path(args.output_dir).name, exist_ok=True, token=args.hub_token
             ).repo_id
+    print(f'{colored("[√]", "green")} Setup accelerator AFAIK.')
     # Load scheduler, tokenizer and models.
     tokenizer = CLIPTokenizer.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="tokenizer"
     )
+    print(f'{colored("[√]", "green")} Loaded CLIP tokenizer.')
 
     #### additional tokens are introduced, including coordinate tokens and character tokens
     print('***************')
@@ -350,13 +353,16 @@ def main():
         text_encoder = CLIPTextModel.from_pretrained(
             args.resume_from_checkpoint, subfolder="text_encoder", max_position_embeddings=args.max_length, ignore_mismatched_sizes=True
         )
+    print(f'{colored("[√]", "green")} Loaded CLIP Text Encoder.')
 
     text_encoder.resize_token_embeddings(len(tokenizer))
 
     vae = AutoencoderKL.from_pretrained(args.pretrained_model_name_or_path, subfolder="vae")
+    print(f'{colored("[√]", "green")} Loaded VAE.')
     unet = UNet2DConditionModel.from_pretrained(
         args.resume_from_checkpoint, subfolder="unet"
     )
+    print(f'{colored("[√]", "green")} Loaded UNet.')
     # freeze parameters of models to save more memory
     # unet.requires_grad_(False)
     vae.requires_grad_(False)
@@ -404,6 +410,7 @@ def main():
 
         accelerator.register_save_state_pre_hook(save_model_hook)
         accelerator.register_load_state_pre_hook(load_model_hook)
+    print(f'{colored("[√]", "green")} Registered save and load state pre-hooks.')
 
     # For mixed precision training we cast all non-trainable weigths (vae, non-lora text_encoder and non-lora unet) to half-precision
     # as these weights are only used for inference, keeping weights in full precision is not required.
@@ -417,7 +424,7 @@ def main():
     unet.to(accelerator.device, dtype=weight_dtype) 
     vae.to(accelerator.device, dtype=weight_dtype)
     text_encoder.to(accelerator.device, dtype=weight_dtype)
-
+    print(f'{colored("[√]", "green")} Moved unet, vae and text_encoder to device and cast to weight_dtype.')
     
     if args.enable_xformers_memory_efficient_attention:
         if is_xformers_available():
@@ -612,6 +619,7 @@ def main():
                 f.write(sentence + '\n')
             f.close()
 
+            print(f'{colored("[√]", "green")} Prepared for denoising loop.')
             for t in tqdm(scheduler.timesteps):
                 with torch.no_grad():  # classifier free guidance
                     noise_pred_cond = unet(sample=input.half(), timestep=t, encoder_hidden_states=encoder_hidden_states_cond[:args.vis_num]).sample # b, 4, 64, 64
@@ -619,7 +627,7 @@ def main():
                     noisy_residual = noise_pred_uncond + args.cfg * (noise_pred_cond - noise_pred_uncond) # b, 4, 64, 64     
                     input = scheduler.step(noisy_residual, t, input).prev_sample
                     # input = prev_noisy_sample
-
+            print(f'{colored("[√]", "green")} Denoising loop done.')
             # decode
             input = 1 / vae.config.scaling_factor * input 
             images = vae.decode(input.half(), return_dict=False)[0] 
@@ -633,6 +641,7 @@ def main():
                 col = index % 4
                 new_image.paste(image, (col*width, row*height))
             new_image.save(f'{args.output_dir}/pred_img_{sample_index}_{args.local_rank}.jpg')
-
+            print(f'{colored("[√]", "green")} Saved image.')
+            
 if __name__ == "__main__":
     main()

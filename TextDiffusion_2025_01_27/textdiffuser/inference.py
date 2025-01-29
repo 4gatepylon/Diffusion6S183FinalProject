@@ -411,6 +411,7 @@ def main():
     scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler") 
     scheduler.set_timesteps(args.sample_steps) 
     sample_num = args.vis_num
+    # NOTE input is the image we will be denoising later.
     noise = torch.randn((sample_num, 4, 64, 64)).to("cuda")  # (b, 4, 64, 64)
     input = noise # (b, 4, 64, 64)
 
@@ -438,6 +439,7 @@ def main():
     segmenter.eval()
     print(f'{colored("[√]", "green")} Text segmenter is successfully loaded.')
 
+    # NOTE each of these cases seems to be meant primarily for getting some kind of masks before actually doing the diffusion?
     #### text-to-image ####
     if args.mode == 'text-to-image':    
         render_image, segmentation_mask_from_pillow = get_layout_from_prompt(args)
@@ -451,7 +453,7 @@ def main():
                 segmentation_mask = segmenter(image_tensor)
             segmentation_mask = segmentation_mask.max(1)[1].squeeze(0)
             
-        segmentation_mask = filter_segmentation_mask(segmentation_mask)
+        segmentation_mask = filter_segmentation_mask(segmentation_mask) # TODO(Adriano) seems to remove certain characters???
         segmentation_mask = torch.nn.functional.interpolate(segmentation_mask.unsqueeze(0).unsqueeze(0).float(), size=(256, 256), mode='nearest')
         segmentation_mask = segmentation_mask.squeeze(1).repeat(sample_num, 1, 1).long().to('cuda') # (1, 1, 256, 256)
         print(f'{colored("[√]", "green")} character-level segmentation_mask: {segmentation_mask.shape}.')
